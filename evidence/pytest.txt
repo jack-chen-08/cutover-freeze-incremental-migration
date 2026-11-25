@@ -1,0 +1,23 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.3.4, pluggy-1.7.0 -- /home/ubuntuuser/work/2921-cutover-freeze/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/ubuntuuser/work/2921-cutover-freeze
+plugins: anyio-4.16.0
+collecting ... collected 8 items
+
+tests/test_freeze_window.py::test_health_reports_freeze_state PASSED     [ 12%]
+tests/test_freeze_window.py::test_write_endpoints_return_503_with_notice PASSED [ 25%]
+tests/test_freeze_window.py::test_every_write_method_is_blocked PASSED   [ 37%]
+tests/test_freeze_window.py::test_read_endpoints_keep_serving_during_freeze PASSED [ 50%]
+tests/test_freeze_window.py::test_writes_work_again_after_freeze_is_lifted PASSED [ 62%]
+tests/test_migration_idempotency.py::test_criterion1_dry_run_is_read_only PASSED [ 75%]
+tests/test_migration_idempotency.py::test_criterion2_replay_same_batch_is_idempotent PASSED [ 87%]
+tests/test_migration_idempotency.py::test_criterion3_soft_deletes_keep_deleted_at PASSED [100%]
+
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/starlette/testclient.py:40
+  /home/ubuntuuser/work/2921-cutover-freeze/.venv/lib/python3.12/site-packages/starlette/testclient.py:40: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = typing.Callable[[], typing.ContextManager[anyio.abc.BlockingPortal]]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+========================= 8 passed, 1 warning in 1.05s =========================

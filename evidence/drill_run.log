@@ -1,0 +1,40 @@
+==============================================================================
+CUTOVER DRILL — data freeze + final incremental migration
+started_at: 2026-11-25T05:29:49.799984+00:00
+==============================================================================
+
+$ python -m scripts.prepare_drill --companies 1000 --contacts 5000
+--- seed fictional data (1,000 companies / 5,000 contacts)
+    drill data ready: companies=1000, contacts=5000, companies_soft_deleted=69, contacts_soft_deleted=276
+
+target snapshot BEFORE dry-run: {'companies': (0, ''), 'contacts': (0, '')}
+
+$ python -m scripts.incremental_migrate --dry-run
+--- dry-run counting only
+    DRY-RUN — pending rows per table (target database is opened READ ONLY):
+      companies    pending=1000
+      contacts     pending=5000
+      TOTAL        pending=6000
+target snapshot AFTER  dry-run: {'companies': (0, ''), 'contacts': (0, '')}
+OK — dry-run left the target database unchanged (criterion 1)
+
+$ python -m scripts.incremental_migrate --batch-size 5000 --batch-id night-01
+--- apply incremental batch night-01 (per-table duration above)
+    [companies] batch=night-01:companies:a13055d43999 rows=1000 target_rows 0->1000 checksum ->cf0e5320 duration=0.093s
+    [contacts] batch=night-01:contacts:fcdb535e3587 rows=5000 target_rows 0->5000 checksum ->d3db3bea duration=0.405s
+    TOTAL duration=0.498s rows_applied=6000
+
+$ python -m scripts.incremental_migrate --batch-size 5000 --batch-id night-01
+--- replay the SAME batch night-01
+    [companies] no pending rows (0.010s)
+    [contacts] no pending rows (0.002s)
+    TOTAL duration=0.012s rows_applied=0
+target snapshot after replay: {'companies': (1000, 'cf0e53203b621e3679fae8fd84ca37ac'), 'contacts': (5000, 'd3db3bea054fe66e2c832011ea83124f')}
+OK — replaying batch night-01 left rows and checksums untouched (criterion 2)
+    companies: source=1000 target=1000 soft_deleted source=69 target=69 deleted_at matched=69
+    contacts: source=5000 target=5000 soft_deleted source=276 target=276 deleted_at matched=276
+OK — soft-deleted rows migrated with identical deleted_at (criterion 3)
+
+finished_at: 2026-11-25T05:29:51.695465+00:00
+wall_clock_total: 1.90s
+RESULT: PASS
