@@ -1,20 +1,41 @@
+# Two independent PostgreSQL 16 instances: the member-space source (trial-run) and
+# the new production target. The acceptance text asks for "two local PostgreSQL 16
+# instances", so they are deliberately not two databases inside one server.
 services:
-  db:
+  source-db:
     image: docker.1panel.live/library/postgres:16-alpine
-    container_name: ms-cutover-db
+    container_name: ms-cutover-source
     environment:
+      POSTGRES_DB: source
       POSTGRES_USER: app
       POSTGRES_PASSWORD: app_pw_change_me
-      POSTGRES_DB: source
     ports:
       - "55432:5432"
     volumes:
-      - ./migrations/sql/0000_create_target_db.sql:/docker-entrypoint-initdb.d/0000_create_target_db.sql:ro
-      - pg_data:/var/lib/postgresql/data
+      - source-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U app -d source"]
-      interval: 3s
+      interval: 5s
       timeout: 3s
       retries: 20
+
+  target-db:
+    image: docker.1panel.live/library/postgres:16-alpine
+    container_name: ms-cutover-target
+    environment:
+      POSTGRES_DB: target
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app_pw_change_me
+    ports:
+      - "55435:5432"
+    volumes:
+      - target-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d target"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
 volumes:
-  pg_data:
+  source-data:
+  target-data:

@@ -19,6 +19,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+PY = sys.executable
 LOG = ROOT / "evidence" / "freeze_run.log"
 PORT = 18080
 BASE = f"http://127.0.0.1:{PORT}"
@@ -72,12 +73,35 @@ def boot(freeze: bool) -> subprocess.Popen:
     return proc
 
 
+def real_org_and_site() -> tuple[str, str]:
+    """Writes need foreign keys that actually exist in the drill database."""
+    import psycopg
+
+    from app.config import settings
+
+    dsn = settings.source_dsn.replace("postgresql+psycopg://", "postgresql://")
+    with psycopg.connect(dsn) as conn, conn.cursor() as cur:
+        cur.execute("SELECT o.id, s.id FROM orgs o CROSS JOIN sites s ORDER BY o.id, s.id LIMIT 1")
+        row = cur.fetchone()
+    if row is None:
+        raise SystemExit("drill database has no org/site rows — run scripts/prepare_drill.py --phase seed --truncate")
+    return str(row[0]), str(row[1])
+
+
 def main() -> int:
     LOG.parent.mkdir(parents=True, exist_ok=True)
     LOG.write_text("", encoding="utf-8")
     log(f"started_at: {datetime.now(timezone.utc).isoformat()}")
 
     failures: list[str] = []
+
+    org_id, site_id = real_org_and_site()
+    freeze_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    rec = subprocess.run([PY, "-m", "scripts.cutover_incremental", "--record-freeze-at", freeze_at],
+                         cwd=ROOT, capture_output=True, text=True)
+    log(f"\nfreeze point: {freeze_at}  (recorded by cutover_incremental: {rec.stdout.strip() or rec.stderr.strip()})")
+    if rec.returncode != 0:
+        failures.append("freeze_at could not be recorded")
 
     log("\n=== PASS A — freeze ON (FREEZE_ENABLED=true) ===")
     proc = boot(True)
@@ -96,8 +120,8 @@ def main() -> int:
 
         payload = {
             "name": "Fictional Cutover Contact Co",
-            "org_id": "11111111-1111-1111-1111-111111111111",
-            "site_id": "22222222-2222-2222-2222-222222222222",
+            "org_id": org_id,
+            "site_id": site_id,
         }
         for method in ("POST", "PUT", "PATCH", "DELETE"):
             code, body = call(method, "/api/v1/companies", payload if method != "DELETE" else None)
@@ -120,8 +144,8 @@ def main() -> int:
         log(f"GET  /health                -> {code} {body}")
         code, body = call("POST", "/api/v1/companies", {
             "name": "Fictional Post Freeze Co",
-            "org_id": "33333333-3333-3333-3333-333333333333",
-            "site_id": "44444444-4444-4444-4444-444444444444",
+            "org_id": org_id,
+            "site_id": site_id,
         })
         log(f"POST /api/v1/companies        -> {code} {body}")
         if code != 201:

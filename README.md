@@ -1,80 +1,77 @@
-# Cutover night — data freeze + final incremental migration
+# cutover-freeze-incremental-migration
 
-Reference implementation for the cutover-night runbook: hold the member-data service in a
-read-only window, run the final incremental copy into the new schema, then lift the freeze.
-Everything below is reproducible from a clean checkout with Docker and Python 3.12.
+Cutover-night package for the member-space platform: put the service into a **read-only
+freeze window**, run the **final incremental migration** into the new production database,
+**realign sequences and redundant counters**, and only open the gate when a **reconciliation
+script reports zero differences**.
 
-## What is in the box
-
-| Path | Purpose |
-| --- | --- |
-| `app/main.py` | Member-data service (FastAPI). HTTP middleware returns `503 service_temporarily_frozen` + maintenance text for `POST/PUT/PATCH/DELETE` while `FREEZE_ENABLED=true`; all `GET` endpoints keep serving. |
-| `app/config.py` | Settings read from environment variables only (`SOURCE_DATABASE_URL`, `TARGET_DATABASE_URL`, `FREEZE_ENABLED`, `FREEZE_MESSAGE`). No credentials in code. |
-| `app/db.py` | SQLAlchemy 2 models (`companies`, `contacts`) with `deleted_at` soft-delete column. |
-| `migrations/sql/0001_schema.sql` | Target-schema DDL (UUID keys, audit columns, `deleted_at`). |
-| `scripts/prepare_drill.py` | Deterministic fictional seed: 1,000 companies / 5,000 contacts, ~6% soft-deleted, some rows with later `updated_at`. |
-| `scripts/incremental_migrate.py` | Incremental copy: `(updated_at, id)` composite watermark, keyset paging, `ON CONFLICT (id) DO UPDATE`, `migration_batches` ledger for batch-level idempotency, `--dry-run` opens the target connection `READ ONLY`. |
-| `scripts/run_drill.py` | End-to-end drill that produces `evidence/drill_run.log`. |
-| `scripts/run_freeze_drill.py` | Boots the real service twice (freeze on / off) and produces `evidence/freeze_run.log`. |
-| `tests/` | pytest suite covering all five acceptance points. |
-
-## Acceptance points → evidence
-
-| # | Requirement | Where it is proven | Result |
-| --- | --- | --- | --- |
-| 1 | Dry-run reports pending rows **without** touching the target DB | `scripts/run_drill.py` (snapshot before/after + `SET TRANSACTION READ ONLY`), `tests/test_migration_idempotency.py::test_criterion1_dry_run_is_read_only` | target rows `0 → 0`, checksum unchanged, read-only insert raises `ReadOnlySqlTransaction` |
-| 2 | Running the same batch twice leaves the target unchanged | `scripts/run_drill.py` (batch `night-01` replayed), `::test_criterion2_replay_same_batch_is_idempotent` | first run 1,000 + 5,000 rows; replay `rows_applied=0`, checksums `cf0e5320…` / `d3db3bea…` identical |
-| 3 | Soft-deleted rows carry identical `deleted_at` | `scripts/run_drill.py`, `::test_criterion3_soft_deletes_keep_deleted_at` | companies 69/69, contacts 276/276, `deleted_at` matched row by row |
-| 4 | Run log states total duration **and** per-table duration | `evidence/drill_run.log` | companies 0.093 s, contacts 0.405 s, total 0.498 s (wall clock 1.90 s for the whole drill) |
-| 5 | During the freeze, writes answer 503 with a maintenance notice while reads stay 200 | `scripts/run_freeze_drill.py`, `tests/test_freeze_window.py` | GETs 200 throughout; `POST/PUT/PATCH/DELETE` → 503 `service_temporarily_frozen` + configured notice + `Retry-After: 3600`; write returns 201 once the flag is cleared |
-
-Evidence files (regenerate with the commands below, they are not hand-written):
-
-* `evidence/drill_run.log` — migration dry-run, apply, replay, soft-delete parity
-* `evidence/freeze_run.log` — real HTTP freeze window behaviour
-* `evidence/pytest.txt` — `8 passed`
-
-## Run it
+Everything below is reproducible on two local PostgreSQL 16 instances — the trial-run
+source (`:55432`) and the new production target (`:55435`) — with fictional data only
+(1,000 member companies / 5,000 contacts plus supporting rows).
 
 ```bash
-# 1. local Postgres with the source and target databases
-docker compose up -d          # container ms-cutover-db, host port 55432
-
-# 2. python environment
+docker compose up -d
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
-
-# 3. full drill (seed → dry-run → apply → replay → soft-delete parity)
-.venv/bin/python -m scripts.run_drill
-
-# 4. freeze window over real HTTP
-.venv/bin/python -m scripts.run_freeze_drill
-
-# 5. tests
-.venv/bin/python -m pytest -v
+.venv/bin/python -m scripts.run_drill          # full rehearsal  -> evidence/drill_run.log
+.venv/bin/python -m scripts.run_freeze_drill   # freeze window   -> evidence/freeze_run.log
+.venv/bin/python -m pytest -q                  # 14 tests
 ```
 
-Connection settings come from the environment (`app/config.py`); the compose defaults point at
-`127.0.0.1:55432` with the `app` role, so nothing has to be exported for the drill.
+## Acceptance criteria → where the proof lives
 
-## Operational notes
+| Criterion | Implementation | Evidence (real run, this repo) |
+| --- | --- | --- |
+| **1.** `--dry-run` prints pending rows per table and leaves the target untouched | `scripts/cutover_incremental.py --dry-run` — target connection opened `READ ONLY` (`connect(role, read_only=True)`), counting only | `evidence/drill_run.log` §step 4: per-table `pending=`, `TOTAL pending=157`; checksums/counts before == after; `tests/test_cutover_incremental.py::test_criterion1_dry_run_is_read_only` proves an INSERT is refused by the server |
+| **2.** Same batch twice → same rows and checksums | `migration_batches` ledger (`batch_id, table, rows, checksum, duration_ms`) short-circuits a known batch; row-level `INSERT … ON CONFLICT (id) DO UPDATE` is the second line of defence | `evidence/drill_run.log` §step 6: replay of `inc-01` → `applied=0`, per-table checksums identical; `test_criterion2_replay_same_batch_is_idempotent` |
+| **3.** Soft-deleted rows carry identical `deleted_at` | `deleted_at` is a normal migrated column; deleted rows are **not** filtered out | §step 8: member_companies 63/63, contacts 278/278, registrations 80/80, activities 2/2 — `deleted_at` matched row by row; `test_criterion3_soft_deletes_keep_deleted_at` |
+| **4.** 1,000 companies / 5,000 contacts, total **and** per-table duration | one line per table with `applied=` + `duration=` and a `TOTAL … duration=` line | §step 5: full load `TOTAL applied=8443 duration=1.515s` (companies 0.164s, contacts 0.775s), incremental `TOTAL applied=157 duration=0.130s`; wall clock 8.7s |
+| **5.** Freeze window: writes → 503 + maintenance notice, reads → 200 | two independent layers: gateway snippet `gateway/nginx-freeze.conf` (`map` on request method) and app middleware `app/main.py` (`FREEZE_ENABLED`) | `evidence/freeze_run.log`: real HTTP, `GET /health`, `/api/v1/companies`, `/api/v1/contacts`, `/api/v1/freeze/status` all 200; `POST/PUT/PATCH/DELETE` all **503** with `service_temporarily_frozen` + notice + `Retry-After: 3600`; after lifting the flag `POST` → **201** |
 
-* **Freeze switch** — flip `FREEZE_ENABLED` and restart the service (or reload config through
-  your own config bus). The flag is read once at startup; `/api/v1/freeze/status` reports the
-  active state so the cutover commander can confirm it before the migration starts.
-* **Why a ledger and not just an upsert** — the ledger makes a *whole batch* a no-op on replay
-  without reading the data again; the row-level upsert is the second line of defence for
-  batches that were partially applied before a crash.
-* **Watermark safety** — `(updated_at, id)` is strictly greater-than, so rows updated during the
-  window are picked up by the next batch. Writes are held by the freeze, so the watermark cannot
-  slide past a concurrent update.
-* **Soft deletes** — deleted rows are migrated, never filtered out, so the new schema can answer
-  historical queries and the `deleted_at` values stay comparable for reconciliation.
-* **Rollback** — the target database is disposable: `docker compose down -v` drops it and the
-  source is untouched by design (the migration only ever opens it read-only when counting).
+## Ticket scope (beyond the five criteria)
 
-## Data / secrecy
+| Scope item | Where |
+| --- | --- |
+| ② Incremental filter `updated_at > last migration point` **and** `≤ freeze_at` | `pending_rows()` — keyset on `(updated_at, id)`, hard upper bound `until`; `--record-freeze-at` / `--freeze-at` store and honour the freeze point in `migration_state`. Test: `test_freeze_upper_bound_excludes_later_rows` |
+| ③ Eight dependency-ordered business tables | `TABLES` in `scripts/cutover_incremental.py`: orgs → sites → roles → users → user_roles → member_companies → contacts → tags → tag_links → activities → registrations → opportunities → kb_articles. Order is asserted by `test_dependency_order_puts_parents_first` |
+| ④ Sequences synced + redundant counters recomputed | `sync_sequences()` / `recompute_counters()` — run after data load: `member_companies.contact_count`, `activities.registration_count` recomputed from live child rows; drill §step 9 shows `sum(registration_count)=1920 == live registrations=1920` and sequence `last_value ≥ max(legacy_no)` |
+| ⑤ Reconciliation script, zero difference to release | `scripts/cutover_verify.py` — per-table row count + order-independent checksum over business columns, derived counters checked separately against the recompute, exits 1 on any difference. Drill §step 7: `RELEASE GATE: PASS — 13 tables, 0 differences` |
+| ① Gateway freeze snippet + recorded `freeze_at` | `gateway/nginx-freeze.conf` (map block + server block + deploy/lift commands), `freeze_at` persisted via `--record-freeze-at` and printed in `evidence/freeze_run.log` |
+| Script name / flags | `scripts/cutover_incremental.py` with `--dry-run`, `--tables`, `--since`, `--freeze-at`, `--record-freeze-at`, `--batch-id`, `--batch-size`, `--log` |
+| Two local PostgreSQL 16 instances | `docker-compose.yml` — separate containers `ms-cutover-source` / `ms-cutover-target` |
+| Data-step runbook | `docs/runbook.md` — 7 sections, every step with a read-back criterion and rollback row |
+| Schema changes under Alembic | `alembic.ini`, `migrations/env.py`, `migrations/versions/0001_baseline.py` execute `migrations/sql/0001_schema.sql` (one DDL source for Alembic, drill and psql) |
 
-All seed data is generated fiction (`Fictional Company 0000`, `Fictional Contact 00000`) with
-random UUIDs; the delivery contains no customer names, no credentials, and no network calls to
-third-party services. Credentials are read from environment variables only — `.env*` files are
-git-ignored except `.env.example`.
+## Design notes
+
+* **Ids and audit columns.** Every business table has `id UUID`, `org_id`, `site_id`,
+  `created_at`, `created_by`, `updated_at`, `deleted_at`; `users`, `member_companies`,
+  `contacts` additionally keep the legacy integer `legacy_no` with its sequence.
+* **Idempotent by construction.** Ledger first, upsert second, checksum recorded per batch;
+  re-running is always safe and never double-counts.
+* **Target is disposable, source is never written.** `--dry-run` uses a READ ONLY
+  transaction; the migration only ever reads the source. Rollback = drop and rebuild the
+  target.
+* **Frozen means frozen at two layers.** The gateway answers 503 even if the app is
+  restarted or a deployment slips through; the app answers 503 even if the gateway config
+  has not been reloaded yet. Same message text so users never see two different notices.
+* **Fictional data only.** No customer names, no real tax numbers, phone numbers are masked
+  (`+1****000001`). Credentials come from environment variables / `.env` (see `.env.example`).
+
+## Layout
+
+```
+app/                 freeze middleware + read/write endpoints (FastAPI, SQLAlchemy 2)
+scripts/             cutover_incremental.py, cutover_verify.py, prepare_drill.py,
+                     run_drill.py, run_freeze_drill.py
+gateway/             nginx freeze snippet
+migrations/          sql/0001_schema.sql, alembic env + baseline revision
+docs/runbook.md      cutover-night operating procedure
+evidence/            drill_run.log, freeze_run.log, pytest.txt (real outputs)
+tests/               pytest gate: 5 freeze tests + 9 migration tests
+```
+
+## Environment
+
+`SOURCE_HOST/PORT/DB`, `TARGET_HOST/PORT/DB`, `PGUSER`, `PGPASSWORD`, `FREEZE_ENABLED`,
+`FREEZE_MESSAGE` — all optional, defaults match `docker-compose.yml`. No credential is
+committed; `.env` is git-ignored.

@@ -1,40 +1,164 @@
-==============================================================================
-CUTOVER DRILL — data freeze + final incremental migration
-started_at: 2026-11-25T05:29:49.799984+00:00
+started_at: 2026-11-25T06:07:15.645894+00:00
 ==============================================================================
 
-$ python -m scripts.prepare_drill --companies 1000 --contacts 5000
---- seed fictional data (1,000 companies / 5,000 contacts)
-    drill data ready: companies=1000, contacts=5000, companies_soft_deleted=69, contacts_soft_deleted=276
+### step 0 — schema on both PostgreSQL 16 instances (source 55432 / target 55433)
+    schema applied: orgs, sites, roles, users, user_roles, member_companies, contacts, tags, tag_links, activities, registrations, opportunities, kb_articles
 
-target snapshot BEFORE dry-run: {'companies': (0, ''), 'contacts': (0, '')}
+### steps 1-2 — seed and full migration
 
-$ python -m scripts.incremental_migrate --dry-run
---- dry-run counting only
-    DRY-RUN — pending rows per table (target database is opened READ ONLY):
-      companies    pending=1000
-      contacts     pending=5000
-      TOTAL        pending=6000
-target snapshot AFTER  dry-run: {'companies': (0, ''), 'contacts': (0, '')}
-OK — dry-run left the target database unchanged (criterion 1)
+$ scripts.prepare_drill --phase seed --truncate
+--- seed fictional data
+        drill data ready: companies=1000, contacts=5000
 
-$ python -m scripts.incremental_migrate --batch-size 5000 --batch-id night-01
---- apply incremental batch night-01 (per-table duration above)
-    [companies] batch=night-01:companies:a13055d43999 rows=1000 target_rows 0->1000 checksum ->cf0e5320 duration=0.093s
-    [contacts] batch=night-01:contacts:fcdb535e3587 rows=5000 target_rows 0->5000 checksum ->d3db3bea duration=0.405s
-    TOTAL duration=0.498s rows_applied=6000
+$ scripts.cutover_incremental --since 1970-01-01T00:00:00+00:00 --batch-id full-01 --batch-size 5000
+--- full migration (everything up to now)
+    [06:07:20] run start — batch=full-01 tables=orgs,sites,roles,users,user_roles,member_companies,contacts,tags,tag_links,activities,registrations,opportunities,kb_articles
+    [06:07:20] since=1970-01-01T00:00:00+00:00  freeze_at=not recorded
+    [06:07:20]   orgs               applied=1      duration=0.023s
+    [06:07:20]   sites              applied=2      duration=0.013s
+    [06:07:20]   roles              applied=3      duration=0.012s
+    [06:07:20]   users              applied=12     duration=0.015s
+    [06:07:20]   user_roles         applied=12     duration=0.014s
+    [06:07:20]   member_companies   applied=1000   duration=0.149s
+    [06:07:21]   contacts           applied=5000   duration=0.793s
+    [06:07:21]   tags               applied=5      duration=0.012s
+    [06:07:21]   tag_links          applied=250    duration=0.054s
+    [06:07:21]   activities         applied=8      duration=0.012s
+    [06:07:21]   registrations      applied=2000   duration=0.314s
+    [06:07:21]   opportunities      applied=120    duration=0.025s
+    [06:07:21]   kb_articles        applied=30     duration=0.014s
+    [06:07:21]   sequence sync — users.legacy_no sequence -> 1011
+    [06:07:21]   sequence sync — member_companies.legacy_no sequence -> 20999
+    [06:07:21]   sequence sync — contacts.legacy_no sequence -> 504999
+    [06:07:21]   counter recompute — member_companies: 1000 redundant counter rows realigned
+    [06:07:21]   counter recompute — activities: 8 redundant counter rows realigned
+    [06:07:21]   TOTAL applied=8443 duration=1.475s
+    [06:07:21] run end
+    marker: last_full_migration_at=2026-11-01T03:23:19+00:00 (recorded at 2026-11-25T06:07:20.026249+00:00)
+    target rows after full migration: orgs=1, sites=2, roles=3, users=12, user_roles=12, member_companies=1000, contacts=5000, tags=5, tag_links=250, activities=8, registrations=2000, opportunities=120, kb_articles=30
 
-$ python -m scripts.incremental_migrate --batch-size 5000 --batch-id night-01
---- replay the SAME batch night-01
-    [companies] no pending rows (0.010s)
-    [contacts] no pending rows (0.002s)
-    TOTAL duration=0.012s rows_applied=0
-target snapshot after replay: {'companies': (1000, 'cf0e53203b621e3679fae8fd84ca37ac'), 'contacts': (5000, 'd3db3bea054fe66e2c832011ea83124f')}
-OK — replaying batch night-01 left rows and checksums untouched (criterion 2)
-    companies: source=1000 target=1000 soft_deleted source=69 target=69 deleted_at matched=69
-    contacts: source=5000 target=5000 soft_deleted source=276 target=276 deleted_at matched=276
-OK — soft-deleted rows migrated with identical deleted_at (criterion 3)
+### step 3-4 — trial-run activity, then the freeze point
 
-finished_at: 2026-11-25T05:29:51.695465+00:00
-wall_clock_total: 1.90s
-RESULT: PASS
+$ scripts.prepare_drill --phase changes
+--- trial-run writes (updates / inserts / soft deletes / counter drift)
+        trial-run activity applied: {'updated': {'member_companies': 40, 'contacts': 60}, 'inserted_contacts': 25, 'soft_deleted_registrations': 30, 'soft_deleted_activities': 2}
+    freeze_at recorded = 2026-11-25T06:07:21+00:00（冻结时间点已落盘）
+
+$ scripts.cutover_incremental --dry-run
+--- dry-run: pending rows per table, target opened READ ONLY
+    [06:07:22] run start — batch=batch-20261125T060722 tables=orgs,sites,roles,users,user_roles,member_companies,contacts,tags,tag_links,activities,registrations,opportunities,kb_articles
+    [06:07:22] since=2026-11-01T03:23:19+00:00  freeze_at=2026-11-25T06:07:21+00:00
+    [06:07:22] DRY-RUN — counting only, target connection is READ ONLY
+    [06:07:22]   orgs               pending=0
+    [06:07:22]   sites              pending=0
+    [06:07:22]   roles              pending=0
+    [06:07:22]   users              pending=0
+    [06:07:22]   user_roles         pending=0
+    [06:07:22]   member_companies   pending=40
+    [06:07:22]   contacts           pending=85
+    [06:07:22]   tags               pending=0
+    [06:07:22]   tag_links          pending=0
+    [06:07:22]   activities         pending=2
+    [06:07:22]   registrations      pending=30
+    [06:07:22]   opportunities      pending=0
+    [06:07:22]   kb_articles        pending=0
+    [06:07:22]   TOTAL              pending=157
+    OK — dry-run left the target database unchanged (criterion 1)
+
+### step 5 — incremental batch, timed per table (criterion 4)
+
+$ scripts.cutover_incremental --batch-id inc-01 --batch-size 2000
+--- incremental batch inc-01
+    [06:07:22] run start — batch=inc-01 tables=orgs,sites,roles,users,user_roles,member_companies,contacts,tags,tag_links,activities,registrations,opportunities,kb_articles
+    [06:07:22] since=2026-11-01T03:23:19+00:00  freeze_at=2026-11-25T06:07:21+00:00
+    [06:07:22]   orgs               applied=0      duration=0.008s
+    [06:07:22]   sites              applied=0      duration=0.003s
+    [06:07:22]   roles              applied=0      duration=0.002s
+    [06:07:22]   users              applied=0      duration=0.002s
+    [06:07:22]   user_roles         applied=0      duration=0.002s
+    [06:07:22]   member_companies   applied=40     duration=0.023s
+    [06:07:22]   contacts           applied=85     duration=0.025s
+    [06:07:22]   tags               applied=0      duration=0.002s
+    [06:07:22]   tag_links          applied=0      duration=0.002s
+    [06:07:22]   activities         applied=2      duration=0.011s
+    [06:07:22]   registrations      applied=30     duration=0.014s
+    [06:07:22]   opportunities      applied=0      duration=0.002s
+    [06:07:22]   kb_articles        applied=0      duration=0.002s
+    [06:07:22]   sequence sync — users.legacy_no sequence -> 1011
+    [06:07:22]   sequence sync — member_companies.legacy_no sequence -> 20999
+    [06:07:22]   sequence sync — contacts.legacy_no sequence -> 600024
+    [06:07:22]   counter recompute — member_companies: 62 redundant counter rows realigned
+    [06:07:22]   counter recompute — activities: 7 redundant counter rows realigned
+    [06:07:22]   TOTAL applied=157 duration=0.120s
+    [06:07:22] run end
+
+### step 6 — replay the same batch (criterion 2)
+
+$ scripts.cutover_incremental --batch-id inc-01 --batch-size 2000
+--- replay inc-01
+    [06:07:22] run start — batch=inc-01 tables=orgs,sites,roles,users,user_roles,member_companies,contacts,tags,tag_links,activities,registrations,opportunities,kb_articles
+    [06:07:22] since=2026-11-01T03:23:19+00:00  freeze_at=2026-11-25T06:07:21+00:00
+    [06:07:22]   orgs               applied=0      duration=0.008s
+    [06:07:22]   sites              applied=0      duration=0.003s
+    [06:07:22]   roles              applied=0      duration=0.003s
+    [06:07:22]   users              applied=0      duration=0.002s
+    [06:07:22]   user_roles         applied=0      duration=0.002s
+    [06:07:22]   member_companies   applied=0      duration=0.003s
+    [06:07:22]   contacts           applied=0      duration=0.003s
+    [06:07:22]   tags               applied=0      duration=0.002s
+    [06:07:22]   tag_links          applied=0      duration=0.002s
+    [06:07:22]   activities         applied=0      duration=0.002s
+    [06:07:22]   registrations      applied=0      duration=0.002s
+    [06:07:22]   opportunities      applied=0      duration=0.002s
+    [06:07:22]   kb_articles        applied=0      duration=0.003s
+    [06:07:22]   sequence sync — users.legacy_no sequence -> 1011
+    [06:07:22]   sequence sync — member_companies.legacy_no sequence -> 20999
+    [06:07:22]   sequence sync — contacts.legacy_no sequence -> 600024
+    [06:07:22]   counter recompute — member_companies: 0 redundant counter rows realigned
+    [06:07:22]   counter recompute — activities: 0 redundant counter rows realigned
+    [06:07:23]   TOTAL applied=0 duration=0.068s
+    [06:07:23] run end
+    OK — replaying batch inc-01 left rows and checksums untouched (criterion 2)
+
+### step 7 — reconciliation gate (0 differences to release)
+
+$ scripts.cutover_verify
+--- reconciliation
+    table               source  target   delta  checksum
+    orgs                     1       1      +0  2542f4c31d39 / 2542f4c31d39  ok
+    sites                    2       2      +0  e04e914ece9b / e04e914ece9b  ok
+    roles                    3       3      +0  1a39f21089f6 / 1a39f21089f6  ok
+    users                   12      12      +0  b198f552a3f9 / b198f552a3f9  ok
+    user_roles              12      12      +0  67d640167a5b / 67d640167a5b  ok
+    member_companies      1000    1000      +0  050f3f2d3f0e / 050f3f2d3f0e  ok
+    contacts              5025    5025      +0  2799565cdb9e / 2799565cdb9e  ok
+    tags                     5       5      +0  e2334e2506d5 / e2334e2506d5  ok
+    tag_links              250     250      +0  6ebb745c68c0 / 6ebb745c68c0  ok
+    activities               8       8      +0  a066b9a96681 / a066b9a96681  ok
+    registrations         2000    2000      +0  844d155b2b91 / 844d155b2b91  ok
+    opportunities          120     120      +0  9681451c0cde / 9681451c0cde  ok
+    kb_articles             30      30      +0  e7bd5f4adfa2 / e7bd5f4adfa2  ok
+    
+    RELEASE GATE: PASS — 13 tables, 0 differences（差异为 0，放行）
+    OK — release gate PASS: source and target agree on every table
+
+### step 8 — soft-deleted rows carry identical deleted_at (criterion 3)
+    member_companies   soft_deleted source=63 target=63 deleted_at matched=63
+    contacts           soft_deleted source=278 target=278 deleted_at matched=278
+    registrations      soft_deleted source=80 target=80 deleted_at matched=80
+    activities         soft_deleted source=2 target=2 deleted_at matched=2
+    OK — soft-deleted rows migrated with identical deleted_at (criterion 3)
+
+### step 9 — sequences and redundant counters
+    sequence users_legacy_no_seq: max(legacy_no)=1011 sequence_last_value=1011 ok
+    sequence member_companies_legacy_no_seq: max(legacy_no)=20999 sequence_last_value=20999 ok
+    sequence contacts_legacy_no_seq: max(legacy_no)=600024 sequence_last_value=600024 ok
+    activities with wrong registration_count = 0 / member_companies with wrong contact_count = 0
+    sum(registration_count)=1920 vs live registrations=1920
+    OK — sequences synced and redundant counters recomputed（序列与冗余计数已对齐）
+
+==============================================================================
+finished_at: 2026-11-25T06:07:24.416018+00:00
+wall_clock_total: 8.77s
+RESULT: PASS — every criterion holds on both instances
+log written to /home/ubuntuuser/work/2921-cutover-freeze/evidence/drill_run.log

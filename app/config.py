@@ -31,11 +31,11 @@ class Settings:
         return cls(
             source_dsn=_env(
                 "SOURCE_DATABASE_URL",
-                "postgresql+psycopg://app:app_pw_change_me@localhost:55432/source",
+                "postgresql+psycopg://app:app_pw_change_me@127.0.0.1:55432/source",
             ),
             target_dsn=_env(
                 "TARGET_DATABASE_URL",
-                "postgresql+psycopg://app:app_pw_change_me@localhost:55432/target",
+                "postgresql+psycopg://app:app_pw_change_me@127.0.0.1:55435/target",
             ),
             freeze_enabled=_flag("FREEZE_ENABLED", False),
             freeze_message=_env(

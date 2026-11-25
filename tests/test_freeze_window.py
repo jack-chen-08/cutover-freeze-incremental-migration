@@ -65,14 +65,28 @@ def test_read_endpoints_keep_serving_during_freeze(monkeypatch):
         assert r.status_code == 200, (path, r.status_code)
 
 
+def _first_org_and_site() -> tuple[str, str]:
+    """Foreign keys must point at rows that really exist in the drill database."""
+    from app.db import SourceSession, Org, Site
+
+    with SourceSession() as s:
+        org = s.query(Org).first()
+        site = s.query(Site).first()
+        if org is None or site is None:
+            import pytest
+            pytest.skip("drill database has no org/site rows yet — run scripts/prepare_drill.py")
+        return str(org.id), str(site.id)
+
+
 def test_writes_work_again_after_freeze_is_lifted(monkeypatch):
     monkeypatch.setattr(service, "settings", _settings(False))
+    org_id, site_id = _first_org_and_site()
     r = client.post(
         "/api/v1/companies",
         json={
             "name": "Fictional Post Freeze Ltd",
-            "org_id": "33333333-3333-3333-3333-333333333333",
-            "site_id": "44444444-4444-4444-4444-444444444444",
+            "org_id": org_id,
+            "site_id": site_id,
         },
     )
     assert r.status_code == 201, r.text

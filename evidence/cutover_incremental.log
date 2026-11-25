@@ -1,0 +1,332 @@
+[06:04:45] run start — batch=full-01 tables=orgs,sites,roles,users,user_roles,member_companies,contacts,tags,tag_links,activities,registrations,opportunities,kb_articles
+[06:04:45] since=1970-01-01T00:00:00+00:00  freeze_at=not recorded
+[06:04:45]   orgs               applied=1      duration=0.021s
+[06:04:45]   sites              applied=2      duration=0.013s
+[06:04:45]   roles              applied=3      duration=0.012s
+[06:04:45]   users              applied=12     duration=0.014s
+[06:04:45]   user_roles         applied=12     duration=0.014s
+[06:04:46]   member_companies   applied=1000   duration=0.143s
+[06:04:46]   contacts           applied=5000   duration=0.772s
+[06:04:46]   tags               applied=5      duration=0.013s
+[06:04:46]   tag_links          applied=250    duration=0.051s
+[06:04:46]   activities         applied=8      duration=0.012s
+[06:04:47]   registrations      applied=2000   duration=0.300s
+[06:04:47]   opportunities      applied=120    duration=0.024s
+[06:04:47]   kb_articles        applied=30     duration=0.014s
+[06:04:47]   sequence sync — users.legacy_no sequence -> 1011
+[06:04:47]   sequence sync — member_companies.legacy_no sequence -> 20999
+[06:04:47]   sequence sync — contacts.legacy_no sequence -> 504999
+[06:04:47]   counter recompute — member_companies: 1000 redundant counter rows realigned
+[06:04:47]   counter recompute — activities: 8 redundant counter rows realigned
+[06:04:47]   TOTAL applied=8443 duration=1.427s
+[06:04:47] run end
+[06:04:47] run start — batch=batch-20261125T060447 tables=orgs,sites,roles,users,user_roles,member_companies,contacts,tags,tag_links,activities,registrations,opportunities,kb_articles
+[06:04:47] since=2026-11-01T03:23:19+00:00  freeze_at=2026-11-25T06:04:47+00:00
+[06:04:47] DRY-RUN — counting only, target connection is READ ONLY
+[06:04:47]   orgs               pending=0
+[06:04:47]   sites              pending=0
+[06:04:47]   roles              pending=0
+[06:04:47]   users              pending=0
+[06:04:47]   user_roles         pending=0
+[06:04:47]   member_companies   pending=40
+[06:04:47]   contacts           pending=85
+[06:04:47]   tags               pending=0
+[06:04:47]   tag_links          pending=0
+[06:04:47]   activities         pending=2
+[06:04:47]   registrations      pending=30
+[06:04:47]   opportunities      pending=0
+[06:04:47]   kb_articles        pending=0
+[06:04:47]   TOTAL              pending=157
+[06:04:48] run start — batch=inc-01 tables=orgs,sites,roles,users,user_roles,member_companies,contacts,tags,tag_links,activities,registrations,opportunities,kb_articles
+[06:04:48] since=2026-11-01T03:23:19+00:00  freeze_at=2026-11-25T06:04:47+00:00
+[06:04:48]   orgs               applied=0      duration=0.008s
+[06:04:48]   sites              applied=0      duration=0.003s
+[06:04:48]   roles              applied=0      duration=0.002s
+[06:04:48]   users              applied=0      duration=0.002s
+[06:04:48]   user_roles         applied=0      duration=0.002s
+[06:04:48]   member_companies   applied=40     duration=0.018s
+[06:04:48]   contacts           applied=85     duration=0.025s
+[06:04:48]   tags               applied=0      duration=0.003s
+[06:04:48]   tag_links          applied=0      duration=0.003s
+[06:04:48]   activities         applied=2      duration=0.012s
+[06:04:48]   registrations      applied=30     duration=0.014s
+[06:04:48]   opportunities      applied=0      duration=0.003s
+[06:04:48]   kb_articles        applied=0      duration=0.002s
+[06:04:48]   sequence sync — users.legacy_no sequence -> 1011
+[06:04:48]   sequence sync — member_companies.legacy_no sequence -> 20999
+[06:04:48]   sequence sync — contacts.legacy_no sequence -> 600024
+[06:04:48]   counter recompute — member_companies: 62 redundant counter rows realigned
+[06:04:48]   counter recompute — activities: 7 redundant counter rows realigned
+[06:04:48]   TOTAL applied=157 duration=0.121s
+[06:04:48] run end
+[06:04:48] run start — batch=inc-01 tables=orgs,sites,roles,users,user_roles,member_companies,contacts,tags,tag_links,activities,registrations,opportunities,kb_articles
+[06:04:48] since=2026-11-01T03:23:19+00:00  freeze_at=2026-11-25T06:04:47+00:00
+[06:04:48]   orgs               applied=0      duration=0.010s
+[06:04:48]   sites              applied=0      duration=0.003s
+[06:04:48]   roles              applied=0      duration=0.003s
+[06:04:48]   users              applied=0      duration=0.003s
+[06:04:48]   user_roles         applied=0      duration=0.002s
+[06:04:48]   member_companies   applied=0      duration=0.002s
+[06:04:48]   contacts           applied=0      duration=0.003s
+[06:04:48]   tags               applied=0      duration=0.002s
+[06:04:48]   tag_links          applied=0      duration=0.002s
+[06:04:48]   activities         applied=0      duration=0.002s
+[06:04:48]   registrations      applied=0      duration=0.002s
+[06:04:48]   opportunities      applied=0      duration=0.002s
+[06:04:48]   kb_articles        applied=0      duration=0.002s
+[06:04:48]   sequence sync — users.legacy_no sequence -> 1011
+[06:04:48]   sequence sync — member_companies.legacy_no sequence -> 20999
+[06:04:48]   sequence sync — contacts.legacy_no sequence -> 600024
+[06:04:48]   counter recompute — member_companies: 0 redundant counter rows realigned
+[06:04:48]   counter recompute — activities: 0 redundant counter rows realigned
+[06:04:48]   TOTAL applied=0 duration=0.065s
+[06:04:48] run end
+[06:05:04] run start — batch=full-01 tables=orgs,sites,roles,users,user_roles,member_companies,contacts,tags,tag_links,activities,registrations,opportunities,kb_articles
+[06:05:04] since=1970-01-01T00:00:00+00:00  freeze_at=not recorded
+[06:05:04]   orgs               applied=1      duration=0.035s
+[06:05:04]   sites              applied=2      duration=0.012s
+[06:05:04]   roles              applied=3      duration=0.012s
+[06:05:04]   users              applied=12     duration=0.016s
+[06:05:04]   user_roles         applied=12     duration=0.014s
+[06:05:04]   member_companies   applied=1000   duration=0.164s
+[06:05:05]   contacts           applied=5000   duration=0.775s
+[06:05:05]   tags               applied=5      duration=0.013s
+[06:05:05]   tag_links          applied=250    duration=0.049s
+[06:05:05]   activities         applied=8      duration=0.013s
+[06:05:05]   registrations      applied=2000   duration=0.341s
+[06:05:05]   opportunities      applied=120    duration=0.027s
+[06:05:05]   kb_articles        applied=30     duration=0.015s
+[06:05:05]   sequence sync — users.legacy_no sequence -> 1011
+[06:05:05]   sequence sync — member_companies.legacy_no sequence -> 20999
+[06:05:05]   sequence sync — contacts.legacy_no sequence -> 504999
+[06:05:05]   counter recompute — member_companies: 1000 redundant counter rows realigned
+[06:05:05]   counter recompute — activities: 8 redundant counter rows realigned
+[06:05:05]   TOTAL applied=8443 duration=1.515s
+[06:05:05] run end
+[06:05:06] run start — batch=batch-20261125T060506 tables=orgs,sites,roles,users,user_roles,member_companies,contacts,tags,tag_links,activities,registrations,opportunities,kb_articles
+[06:05:06] since=2026-11-01T03:23:19+00:00  freeze_at=2026-11-25T06:05:06+00:00
+[06:05:06] DRY-RUN — counting only, target connection is READ ONLY
+[06:05:06]   orgs               pending=0
+[06:05:06]   sites              pending=0
+[06:05:06]   roles              pending=0
+[06:05:06]   users              pending=0
+[06:05:06]   user_roles         pending=0
+[06:05:06]   member_companies   pending=40
+[06:05:06]   contacts           pending=85
+[06:05:06]   tags               pending=0
+[06:05:06]   tag_links          pending=0
+[06:05:06]   activities         pending=2
+[06:05:06]   registrations      pending=30
+[06:05:06]   opportunities      pending=0
+[06:05:06]   kb_articles        pending=0
+[06:05:06]   TOTAL              pending=157
+[06:05:06] run start — batch=inc-01 tables=orgs,sites,roles,users,user_roles,member_companies,contacts,tags,tag_links,activities,registrations,opportunities,kb_articles
+[06:05:06] since=2026-11-01T03:23:19+00:00  freeze_at=2026-11-25T06:05:06+00:00
+[06:05:06]   orgs               applied=0      duration=0.008s
+[06:05:06]   sites              applied=0      duration=0.003s
+[06:05:06]   roles              applied=0      duration=0.002s
+[06:05:06]   users              applied=0      duration=0.002s
+[06:05:06]   user_roles         applied=0      duration=0.003s
+[06:05:06]   member_companies   applied=40     duration=0.027s
+[06:05:06]   contacts           applied=85     duration=0.025s
+[06:05:06]   tags               applied=0      duration=0.003s
+[06:05:06]   tag_links          applied=0      duration=0.002s
+[06:05:06]   activities         applied=2      duration=0.012s
+[06:05:06]   registrations      applied=30     duration=0.015s
+[06:05:06]   opportunities      applied=0      duration=0.003s
+[06:05:06]   kb_articles        applied=0      duration=0.002s
+[06:05:06]   sequence sync — users.legacy_no sequence -> 1011
+[06:05:06]   sequence sync — member_companies.legacy_no sequence -> 20999
+[06:05:06]   sequence sync — contacts.legacy_no sequence -> 600024
+[06:05:06]   counter recompute — member_companies: 62 redundant counter rows realigned
+[06:05:06]   counter recompute — activities: 7 redundant counter rows realigned
+[06:05:06]   TOTAL applied=157 duration=0.130s
+[06:05:06] run end
+[06:05:07] run start — batch=inc-01 tables=orgs,sites,roles,users,user_roles,member_companies,contacts,tags,tag_links,activities,registrations,opportunities,kb_articles
+[06:05:07] since=2026-11-01T03:23:19+00:00  freeze_at=2026-11-25T06:05:06+00:00
+[06:05:07]   orgs               applied=0      duration=0.008s
+[06:05:07]   sites              applied=0      duration=0.003s
+[06:05:07]   roles              applied=0      duration=0.002s
+[06:05:07]   users              applied=0      duration=0.002s
+[06:05:07]   user_roles         applied=0      duration=0.002s
+[06:05:07]   member_companies   applied=0      duration=0.003s
+[06:05:07]   contacts           applied=0      duration=0.003s
+[06:05:07]   tags               applied=0      duration=0.002s
+[06:05:07]   tag_links          applied=0      duration=0.002s
+[06:05:07]   activities         applied=0      duration=0.002s
+[06:05:07]   registrations      applied=0      duration=0.002s
+[06:05:07]   opportunities      applied=0      duration=0.002s
+[06:05:07]   kb_articles        applied=0      duration=0.003s
+[06:05:07]   sequence sync — users.legacy_no sequence -> 1011
+[06:05:07]   sequence sync — member_companies.legacy_no sequence -> 20999
+[06:05:07]   sequence sync — contacts.legacy_no sequence -> 600024
+[06:05:07]   counter recompute — member_companies: 0 redundant counter rows realigned
+[06:05:07]   counter recompute — activities: 0 redundant counter rows realigned
+[06:05:07]   TOTAL applied=0 duration=0.061s
+[06:05:07] run end
+[06:06:32] run start — batch=full-01 tables=orgs,sites,roles,users,user_roles,member_companies,contacts,tags,tag_links,activities,registrations,opportunities,kb_articles
+[06:06:32] since=1970-01-01T00:00:00+00:00  freeze_at=not recorded
+[06:06:32]   orgs               applied=1      duration=0.028s
+[06:06:32]   sites              applied=2      duration=0.014s
+[06:06:32]   roles              applied=3      duration=0.012s
+[06:06:32]   users              applied=12     duration=0.014s
+[06:06:32]   user_roles         applied=12     duration=0.014s
+[06:06:32]   member_companies   applied=1000   duration=0.139s
+[06:06:33]   contacts           applied=5000   duration=0.754s
+[06:06:33]   tags               applied=5      duration=0.012s
+[06:06:33]   tag_links          applied=250    duration=0.049s
+[06:06:33]   activities         applied=8      duration=0.011s
+[06:06:33]   registrations      applied=2000   duration=0.298s
+[06:06:33]   opportunities      applied=120    duration=0.027s
+[06:06:33]   kb_articles        applied=30     duration=0.013s
+[06:06:33]   sequence sync — users.legacy_no sequence -> 1011
+[06:06:33]   sequence sync — member_companies.legacy_no sequence -> 20999
+[06:06:33]   sequence sync — contacts.legacy_no sequence -> 504999
+[06:06:33]   counter recompute — member_companies: 1000 redundant counter rows realigned
+[06:06:33]   counter recompute — activities: 8 redundant counter rows realigned
+[06:06:33]   TOTAL applied=8443 duration=1.410s
+[06:06:33] run end
+[06:06:34] run start — batch=batch-20261125T060634 tables=orgs,sites,roles,users,user_roles,member_companies,contacts,tags,tag_links,activities,registrations,opportunities,kb_articles
+[06:06:34] since=2026-11-01T03:23:19+00:00  freeze_at=2026-11-25T06:06:33+00:00
+[06:06:34] DRY-RUN — counting only, target connection is READ ONLY
+[06:06:34]   orgs               pending=0
+[06:06:34]   sites              pending=0
+[06:06:34]   roles              pending=0
+[06:06:34]   users              pending=0
+[06:06:34]   user_roles         pending=0
+[06:06:34]   member_companies   pending=40
+[06:06:34]   contacts           pending=85
+[06:06:34]   tags               pending=0
+[06:06:34]   tag_links          pending=0
+[06:06:34]   activities         pending=2
+[06:06:34]   registrations      pending=30
+[06:06:34]   opportunities      pending=0
+[06:06:34]   kb_articles        pending=0
+[06:06:34]   TOTAL              pending=157
+[06:06:34] run start — batch=inc-01 tables=orgs,sites,roles,users,user_roles,member_companies,contacts,tags,tag_links,activities,registrations,opportunities,kb_articles
+[06:06:34] since=2026-11-01T03:23:19+00:00  freeze_at=2026-11-25T06:06:33+00:00
+[06:06:34]   orgs               applied=0      duration=0.010s
+[06:06:34]   sites              applied=0      duration=0.003s
+[06:06:34]   roles              applied=0      duration=0.002s
+[06:06:34]   users              applied=0      duration=0.002s
+[06:06:34]   user_roles         applied=0      duration=0.003s
+[06:06:34]   member_companies   applied=40     duration=0.026s
+[06:06:34]   contacts           applied=85     duration=0.025s
+[06:06:34]   tags               applied=0      duration=0.003s
+[06:06:34]   tag_links          applied=0      duration=0.002s
+[06:06:34]   activities         applied=2      duration=0.013s
+[06:06:34]   registrations      applied=30     duration=0.015s
+[06:06:34]   opportunities      applied=0      duration=0.003s
+[06:06:34]   kb_articles        applied=0      duration=0.002s
+[06:06:34]   sequence sync — users.legacy_no sequence -> 1011
+[06:06:34]   sequence sync — member_companies.legacy_no sequence -> 20999
+[06:06:34]   sequence sync — contacts.legacy_no sequence -> 600024
+[06:06:34]   counter recompute — member_companies: 62 redundant counter rows realigned
+[06:06:34]   counter recompute — activities: 7 redundant counter rows realigned
+[06:06:34]   TOTAL applied=157 duration=0.129s
+[06:06:34] run end
+[06:06:34] run start — batch=inc-01 tables=orgs,sites,roles,users,user_roles,member_companies,contacts,tags,tag_links,activities,registrations,opportunities,kb_articles
+[06:06:34] since=2026-11-01T03:23:19+00:00  freeze_at=2026-11-25T06:06:33+00:00
+[06:06:34]   orgs               applied=0      duration=0.007s
+[06:06:34]   sites              applied=0      duration=0.003s
+[06:06:34]   roles              applied=0      duration=0.003s
+[06:06:34]   users              applied=0      duration=0.002s
+[06:06:34]   user_roles         applied=0      duration=0.002s
+[06:06:34]   member_companies   applied=0      duration=0.002s
+[06:06:34]   contacts           applied=0      duration=0.003s
+[06:06:34]   tags               applied=0      duration=0.002s
+[06:06:34]   tag_links          applied=0      duration=0.002s
+[06:06:34]   activities         applied=0      duration=0.002s
+[06:06:34]   registrations      applied=0      duration=0.002s
+[06:06:34]   opportunities      applied=0      duration=0.002s
+[06:06:34]   kb_articles        applied=0      duration=0.002s
+[06:06:34]   sequence sync — users.legacy_no sequence -> 1011
+[06:06:34]   sequence sync — member_companies.legacy_no sequence -> 20999
+[06:06:34]   sequence sync — contacts.legacy_no sequence -> 600024
+[06:06:34]   counter recompute — member_companies: 0 redundant counter rows realigned
+[06:06:34]   counter recompute — activities: 0 redundant counter rows realigned
+[06:06:34]   TOTAL applied=0 duration=0.060s
+[06:06:34] run end
+[06:07:20] run start — batch=full-01 tables=orgs,sites,roles,users,user_roles,member_companies,contacts,tags,tag_links,activities,registrations,opportunities,kb_articles
+[06:07:20] since=1970-01-01T00:00:00+00:00  freeze_at=not recorded
+[06:07:20]   orgs               applied=1      duration=0.023s
+[06:07:20]   sites              applied=2      duration=0.013s
+[06:07:20]   roles              applied=3      duration=0.012s
+[06:07:20]   users              applied=12     duration=0.015s
+[06:07:20]   user_roles         applied=12     duration=0.014s
+[06:07:20]   member_companies   applied=1000   duration=0.149s
+[06:07:21]   contacts           applied=5000   duration=0.793s
+[06:07:21]   tags               applied=5      duration=0.012s
+[06:07:21]   tag_links          applied=250    duration=0.054s
+[06:07:21]   activities         applied=8      duration=0.012s
+[06:07:21]   registrations      applied=2000   duration=0.314s
+[06:07:21]   opportunities      applied=120    duration=0.025s
+[06:07:21]   kb_articles        applied=30     duration=0.014s
+[06:07:21]   sequence sync — users.legacy_no sequence -> 1011
+[06:07:21]   sequence sync — member_companies.legacy_no sequence -> 20999
+[06:07:21]   sequence sync — contacts.legacy_no sequence -> 504999
+[06:07:21]   counter recompute — member_companies: 1000 redundant counter rows realigned
+[06:07:21]   counter recompute — activities: 8 redundant counter rows realigned
+[06:07:21]   TOTAL applied=8443 duration=1.475s
+[06:07:21] run end
+[06:07:22] run start — batch=batch-20261125T060722 tables=orgs,sites,roles,users,user_roles,member_companies,contacts,tags,tag_links,activities,registrations,opportunities,kb_articles
+[06:07:22] since=2026-11-01T03:23:19+00:00  freeze_at=2026-11-25T06:07:21+00:00
+[06:07:22] DRY-RUN — counting only, target connection is READ ONLY
+[06:07:22]   orgs               pending=0
+[06:07:22]   sites              pending=0
+[06:07:22]   roles              pending=0
+[06:07:22]   users              pending=0
+[06:07:22]   user_roles         pending=0
+[06:07:22]   member_companies   pending=40
+[06:07:22]   contacts           pending=85
+[06:07:22]   tags               pending=0
+[06:07:22]   tag_links          pending=0
+[06:07:22]   activities         pending=2
+[06:07:22]   registrations      pending=30
+[06:07:22]   opportunities      pending=0
+[06:07:22]   kb_articles        pending=0
+[06:07:22]   TOTAL              pending=157
+[06:07:22] run start — batch=inc-01 tables=orgs,sites,roles,users,user_roles,member_companies,contacts,tags,tag_links,activities,registrations,opportunities,kb_articles
+[06:07:22] since=2026-11-01T03:23:19+00:00  freeze_at=2026-11-25T06:07:21+00:00
+[06:07:22]   orgs               applied=0      duration=0.008s
+[06:07:22]   sites              applied=0      duration=0.003s
+[06:07:22]   roles              applied=0      duration=0.002s
+[06:07:22]   users              applied=0      duration=0.002s
+[06:07:22]   user_roles         applied=0      duration=0.002s
+[06:07:22]   member_companies   applied=40     duration=0.023s
+[06:07:22]   contacts           applied=85     duration=0.025s
+[06:07:22]   tags               applied=0      duration=0.002s
+[06:07:22]   tag_links          applied=0      duration=0.002s
+[06:07:22]   activities         applied=2      duration=0.011s
+[06:07:22]   registrations      applied=30     duration=0.014s
+[06:07:22]   opportunities      applied=0      duration=0.002s
+[06:07:22]   kb_articles        applied=0      duration=0.002s
+[06:07:22]   sequence sync — users.legacy_no sequence -> 1011
+[06:07:22]   sequence sync — member_companies.legacy_no sequence -> 20999
+[06:07:22]   sequence sync — contacts.legacy_no sequence -> 600024
+[06:07:22]   counter recompute — member_companies: 62 redundant counter rows realigned
+[06:07:22]   counter recompute — activities: 7 redundant counter rows realigned
+[06:07:22]   TOTAL applied=157 duration=0.120s
+[06:07:22] run end
+[06:07:22] run start — batch=inc-01 tables=orgs,sites,roles,users,user_roles,member_companies,contacts,tags,tag_links,activities,registrations,opportunities,kb_articles
+[06:07:22] since=2026-11-01T03:23:19+00:00  freeze_at=2026-11-25T06:07:21+00:00
+[06:07:22]   orgs               applied=0      duration=0.008s
+[06:07:22]   sites              applied=0      duration=0.003s
+[06:07:22]   roles              applied=0      duration=0.003s
+[06:07:22]   users              applied=0      duration=0.002s
+[06:07:22]   user_roles         applied=0      duration=0.002s
+[06:07:22]   member_companies   applied=0      duration=0.003s
+[06:07:22]   contacts           applied=0      duration=0.003s
+[06:07:22]   tags               applied=0      duration=0.002s
+[06:07:22]   tag_links          applied=0      duration=0.002s
+[06:07:22]   activities         applied=0      duration=0.002s
+[06:07:22]   registrations      applied=0      duration=0.002s
+[06:07:22]   opportunities      applied=0      duration=0.002s
+[06:07:22]   kb_articles        applied=0      duration=0.003s
+[06:07:22]   sequence sync — users.legacy_no sequence -> 1011
+[06:07:22]   sequence sync — member_companies.legacy_no sequence -> 20999
+[06:07:22]   sequence sync — contacts.legacy_no sequence -> 600024
+[06:07:22]   counter recompute — member_companies: 0 redundant counter rows realigned
+[06:07:22]   counter recompute — activities: 0 redundant counter rows realigned
+[06:07:23]   TOTAL applied=0 duration=0.068s
+[06:07:23] run end

@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from app.config import settings
-from app.db import SourceSession, TargetSession, Company, Contact
+from app.db import SourceSession, TargetSession, MemberCompany, Contact
 
 WRITE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 # Read-only endpoints that stay available while the freeze is active.
@@ -57,7 +57,7 @@ class CompanyIn(BaseModel):
 @app.get("/api/v1/companies")
 def list_companies(limit: int = 20, offset: int = 0) -> dict:
     with SourceSession() as s:
-        rows = s.query(Company).order_by(Company.created_at).offset(offset).limit(limit).all()
+        rows = s.query(MemberCompany).order_by(MemberCompany.created_at).offset(offset).limit(limit).all()
         return {
             "items": [
                 {
@@ -77,7 +77,7 @@ def list_companies(limit: int = 20, offset: int = 0) -> dict:
 @app.post("/api/v1/companies", status_code=201)
 def create_company(payload: CompanyIn) -> dict:
     now = datetime.now(timezone.utc)
-    row = Company(id=uuid.uuid4(), created_at=now, updated_at=now, **payload.model_dump())
+    row = MemberCompany(id=uuid.uuid4(), created_at=now, updated_at=now, contact_count=0, **payload.model_dump())
     with SourceSession() as s:
         s.add(row)
         s.commit()
@@ -105,4 +105,4 @@ def list_contacts(limit: int = 20, offset: int = 0) -> dict:
 @app.get("/api/v1/target/companies/count")
 def target_company_count() -> dict:
     with TargetSession() as s:
-        return {"count": s.query(Company).count()}
+        return {"count": s.query(MemberCompany).count()}
